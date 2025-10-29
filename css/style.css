@@ -1,0 +1,552 @@
+/* 易象心学测评系统 - 浅米色主题样式 */
+
+/* ========== 全局样式 ========== */
+:root {
+  /* 配色方案 */
+  --bg-main: #FAF8F3;        /* 浅米色背景 */
+  --bg-card: #FFFFFF;        /* 卡片背景 */
+  --bg-hover: #F5F5DC;       /* 悬停背景(米色) */
+  --text-primary: #5D4037;   /* 主要文字(深褐色) */
+  --text-secondary: #8D6E63; /* 次要文字(褐色) */
+  --accent: #D7CCC8;         /* 强调色(浅褐色) */
+  --border: #E0E0E0;         /* 边框色 */
+  --progress: #A1887F;       /* 进度条色 */
+  --success: #81C784;        /* 成功色 */
+  --danger: #E57373;         /* 危险色 */
+
+  /* 字体 */
+  --font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* 阴影 */
+  --shadow-sm: 0 2px 8px rgba(93, 64, 55, 0.08);
+  --shadow-md: 0 4px 16px rgba(93, 64, 55, 0.12);
+  --shadow-lg: 0 8px 24px rgba(93, 64, 55, 0.16);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  line-height: 1.8;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.result-container {
+  max-width: 1200px;
+}
+
+/* ========== 页面切换 ========== */
+.page {
+  display: none;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.page.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== 欢迎页 ========== */
+.main-title {
+  font-size: 48px;
+  text-align: center;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 20px;
+  color: var(--text-secondary);
+  margin-bottom: 48px;
+}
+
+.intro-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 32px;
+}
+
+.intro-card h2 {
+  font-size: 24px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.intro-card p {
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+
+.intro-card ul {
+  margin: 16px 0 16px 24px;
+  color: var(--text-secondary);
+}
+
+.intro-card li {
+  margin-bottom: 8px;
+}
+
+.intro-card strong {
+  color: var(--text-primary);
+}
+
+.tip {
+  background: var(--bg-hover);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--progress);
+  margin-bottom: 12px !important;
+}
+
+/* ========== 按钮样式 ========== */
+.btn-primary {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--progress);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  background: #8D6E63;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  padding: 12px 24px;
+  font-size: 16px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--progress);
+}
+
+/* ========== 进度条 ========== */
+.progress-bar {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-sm);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-hover);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--progress);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+
+/* ========== 测评题目卡片 ========== */
+.question-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--bg-hover);
+}
+
+.group-header h2 {
+  font-size: 32px;
+  color: var(--text-primary);
+}
+
+.symbol {
+  font-size: 28px;
+  color: var(--progress);
+}
+
+.group-desc {
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  font-size: 16px;
+  /* 隐藏描述文字,避免影响答题客观性 */
+  display: none;
+}
+
+.question-item {
+  padding: 24px 0;
+}
+
+.question-number {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.question-text {
+  font-size: 20px;
+  line-height: 1.8;
+  color: var(--text-primary);
+  margin-bottom: 32px;
+  /* 固定高度确保按钮位置稳定 - 可容纳3行题目 */
+  height: 110px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.answer-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.btn-answer {
+  flex: 1;
+  max-width: 200px;
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-yes {
+  background: var(--success);
+  color: #fff;
+}
+
+.btn-yes:hover {
+  background: #66BB6A;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.btn-no {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-no:hover {
+  background: #EF5350;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* ========== 导航按钮 ========== */
+.navigation {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-nav {
+  padding: 12px 24px;
+  font-size: 16px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-nav:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--progress);
+}
+
+.btn-nav:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========== 结果页面 ========== */
+.result-title {
+  font-size: 36px;
+  text-align: center;
+  margin-bottom: 32px;
+  color: var(--text-primary);
+}
+
+.result-summary {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-md);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.summary-item {
+  text-align: center;
+}
+
+.summary-item .label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.summary-item .values {
+  font-size: 18px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.summary-item .count {
+  font-size: 24px;
+  color: var(--progress);
+  font-weight: 700;
+}
+
+.result-display {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+/* 索引导航 */
+.result-index {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+.index-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--bg-hover);
+}
+
+.index-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.index-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.index-item:hover {
+  background: var(--bg-hover);
+}
+
+.index-item.active {
+  background: var(--progress);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 性格详情卡片 */
+.personality-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+}
+
+.card-header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--bg-hover);
+}
+
+.card-hexagram {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 32px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.card-category {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.card-section {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-size: 20px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.section-content {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.section-highlight {
+  background: var(--bg-hover);
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--progress);
+  margin-top: 12px;
+}
+
+/* 翻页控制 */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.btn-page {
+  padding: 12px 24px;
+  font-size: 16px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-page:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--progress);
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 16px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.result-actions {
+  text-align: center;
+}
+
+/* ========== 响应式设计 ========== */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 16px;
+  }
+
+  .main-title {
+    font-size: 32px;
+  }
+
+  .question-card {
+    padding: 24px;
+  }
+
+  .answer-buttons {
+    flex-direction: column;
+  }
+
+  .btn-answer {
+    max-width: 100%;
+  }
+
+  /* 移动端题目区域高度调整 */
+  .question-text {
+    height: 130px; /* 移动端可能需要更多空间 */
+  }
+
+  .result-display {
+    grid-template-columns: 1fr;
+  }
+
+  .result-index {
+    position: static;
+  }
+
+  .result-summary {
+    grid-template-columns: 1fr;
+  }
+}
