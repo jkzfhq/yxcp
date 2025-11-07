@@ -125,11 +125,19 @@ function createCard(type, data) {
   const card = document.createElement('div');
   card.className = 'dimension-card';
 
+  // 检查该类型是否已有其他符合的维度（锁定检查）
+  const qualifiedInType = Object.entries(state.tests[type]).find(
+    ([dimensionName, ts]) => ts.qualified && dimensionName !== data.name
+  );
+  const isLocked = qualifiedInType !== undefined;
+
   // 根据状态添加样式类
   if (testState.qualified) {
     card.classList.add('qualified');
   } else if (testState.completed) {
     card.classList.add('completed');
+  } else if (isLocked) {
+    card.classList.add('locked');
   }
 
   // 卡片内容
@@ -150,6 +158,23 @@ function createCard(type, data) {
 
 // ========== 开始某个维度的测评 ==========
 function startDimensionTest(type, name) {
+  // 检查该类型是否已有符合的维度（唯一性检查）
+  const qualifiedInType = Object.entries(state.tests[type]).find(
+    ([dimensionName, testState]) => testState.qualified && dimensionName !== name
+  );
+
+  // 如果该类型已有其他符合的维度，阻止测评
+  if (qualifiedInType) {
+    const typeName = type === 'nature' ? '先天人性' : '后天人格';
+    alert(
+      `⚠️ 测评锁定提示\n\n` +
+      `您已在${typeName}中完成了"${qualifiedInType[0]}"的符合测评。\n\n` +
+      `根据唯一性原则，每个类型只能有一个符合的维度。\n\n` +
+      `如需探索其他可能，请点击"重置测评"按钮。`
+    );
+    return; // 阻止继续
+  }
+
   // 保存当前滚动位置
   state.scrollPosition = window.scrollY || window.pageYOffset;
 
@@ -294,12 +319,14 @@ function backToHomeFromResults() {
 function updateViewResultsButton() {
   const btn = document.getElementById('btnViewResults');
 
-  // 检查是否有符合条件的维度
-  const hasQualified =
-    Object.values(state.tests.nature).some(test => test.qualified) &&
-    Object.values(state.tests.personality).some(test => test.qualified);
+  // 统计符合条件的维度数量
+  const qualifiedNatureCount = Object.values(state.tests.nature).filter(test => test.qualified).length;
+  const qualifiedPersonalityCount = Object.values(state.tests.personality).filter(test => test.qualified).length;
 
-  btn.disabled = !hasQualified;
+  // 必须恰好各有1个符合才能查看结果
+  const canViewResults = qualifiedNatureCount === 1 && qualifiedPersonalityCount === 1;
+
+  btn.disabled = !canViewResults;
 }
 
 // ========== 查看结果 ==========
@@ -314,42 +341,35 @@ function calculateResults() {
   state.results.qualifiedPersonalities = [];
   state.results.combinations = [];
 
-  // 收集符合的先天人性
+  // 找到符合的先天人性（应该恰好有1个）
   Object.entries(state.tests.nature).forEach(([name, testState]) => {
     if (testState.qualified) {
       state.results.qualifiedNatures.push(name);
     }
   });
 
-  // 收集符合的后天人格
+  // 找到符合的后天人格（应该恰好有1个）
   Object.entries(state.tests.personality).forEach(([name, testState]) => {
     if (testState.qualified) {
       state.results.qualifiedPersonalities.push(name);
     }
   });
 
-  // 生成M×N种组合
-  state.results.qualifiedNatures.forEach(nature => {
-    state.results.qualifiedPersonalities.forEach(personality => {
-      const combinationName = getPersonalityFullName(nature, personality);
-      const combinationNumber = getPersonalityNumber(nature, personality);
-      state.results.combinations.push({
-        nature,
-        personality,
-        fullName: combinationName,
-        number: combinationNumber
-      });
-    });
-  });
+  // 生成唯一的组合结果（1个先天 × 1个后天 = 1个组合）
+  if (state.results.qualifiedNatures.length === 1 && state.results.qualifiedPersonalities.length === 1) {
+    const nature = state.results.qualifiedNatures[0];
+    const personality = state.results.qualifiedPersonalities[0];
+    const combinationName = getPersonalityFullName(nature, personality);
+    const combinationNumber = getPersonalityNumber(nature, personality);
 
-  // 如果没有符合的,给出默认提示
-  if (state.results.qualifiedNatures.length === 0) {
-    state.results.qualifiedNatures = ['未达到阈值'];
-  }
-  if (state.results.qualifiedPersonalities.length === 0) {
-    state.results.qualifiedPersonalities = ['未达到阈值'];
-  }
-  if (state.results.combinations.length === 0) {
+    state.results.combinations.push({
+      nature,
+      personality,
+      fullName: combinationName,
+      number: combinationNumber
+    });
+  } else {
+    // 容错处理：理论上不应该走到这里
     state.results.combinations = [{
       nature: '无',
       personality: '无',
@@ -363,23 +383,96 @@ function calculateResults() {
 function showResults() {
   showPage('result');
 
-  // 显示结果统计
+  // 显示结果统计（只显示先天人性和后天人格）
   document.getElementById('resultNatures').textContent =
     state.results.qualifiedNatures.join('、');
   document.getElementById('resultPersonalities').textContent =
     state.results.qualifiedPersonalities.join('、');
-  document.getElementById('resultCount').textContent =
-    `共 ${state.results.combinations.length} 种`;
 
-  // 渲染索引列表
-  renderResultIndex();
-
-  // 显示第一个结果
-  state.currentResultIndex = 0;
-  renderCurrentResult();
+  // 直接渲染唯一的结果（不需要索引列表和翻页）
+  renderSingleResult();
 
   // 滚动到页面顶部
   window.scrollTo(0, 0);
+}
+
+// ========== 渲染唯一的结果 ==========
+function renderSingleResult() {
+  // 获取唯一的组合结果
+  const combo = state.results.combinations[0];
+  const resultCard = document.getElementById('currentResultCard');
+
+  // 如果有完整数据,则渲染详情;否则显示基本信息
+  if (combo.number && resultsData[combo.number]) {
+    const data = resultsData[combo.number];
+    resultCard.innerHTML = `
+      <div class="card-header">
+        <div class="card-hexagram">${data.hexagram}</div>
+        <h2 class="card-title">${data.title}</h2>
+        <p class="card-category">${data.category}</p>
+      </div>
+
+      <div class="card-section">
+        <h3 class="section-title">1. ${data.sections.intro.title}</h3>
+        <div class="section-content">
+          <p><strong>卦名与结构:</strong> ${data.sections.intro.guaName}</p>
+          <p><strong>核心心理意象:</strong> ${data.sections.intro.core}</p>
+        </div>
+      </div>
+
+      <div class="card-section">
+        <h3 class="section-title">2. ${data.sections.nature.title}</h3>
+        <div class="section-content">${data.sections.nature.content}</div>
+      </div>
+
+      <div class="card-section">
+        <h3 class="section-title">3. ${data.sections.personality.title}</h3>
+        <div class="section-content">${data.sections.personality.content}</div>
+      </div>
+
+      <div class="card-section">
+        <h3 class="section-title">4. ${data.sections.dynamics.title}</h3>
+        <div class="section-content">${data.sections.dynamics.content}</div>
+      </div>
+
+      <div class="card-section">
+        <h3 class="section-title">5. ${data.sections.advantages.title}</h3>
+        <div class="section-content">${data.sections.advantages.content}</div>
+      </div>
+
+      <div class="card-section">
+        <h3 class="section-title">6. ${data.sections.challenges.title}</h3>
+        <div class="section-content">${data.sections.challenges.content}</div>
+      </div>
+
+      <div class="card-section">
+        <h3 class="section-title">7. ${data.sections.meaning.title}</h3>
+        <div class="section-highlight">${data.sections.meaning.content}</div>
+      </div>
+
+      <div class="card-section">
+        <h3 class="section-title">8. ${data.sections.balance.title}</h3>
+        <div class="section-content">
+          <p><strong>命运趋势:</strong> ${data.sections.balance.trend}</p>
+          <div class="section-highlight"><strong>平衡之道:</strong> ${data.sections.balance.path}</div>
+        </div>
+      </div>
+    `;
+  } else {
+    // 数据暂未补充,显示基本信息
+    resultCard.innerHTML = `
+      <div class="card-header">
+        <h2 class="card-title">${combo.fullName}</h2>
+      </div>
+      <div class="card-section">
+        <p class="section-content">
+          <strong>先天人性:</strong> ${combo.nature}<br>
+          <strong>后天人格:</strong> ${combo.personality}<br><br>
+          <em>详细解析数据正在补充中...</em>
+        </p>
+      </div>
+    `;
+  }
 }
 
 // ========== 渲染结果索引 ==========

@@ -16,7 +16,11 @@
             <div class="intro-card">
                 <h2>测评说明</h2>
                 <p>请点击下方卡片自由选择您想要测评的维度,每个维度包含9道题目。</p>
-                <p class="tip">💡 提示:您可以自由选择测评,完成所需维度后点击"查看结果"按钮</p>
+                <p class="tip">⚠️ <strong>重要规则:</strong></p>
+                <ul class="rule-list">
+                    <li><strong>唯一性原则:</strong> 先天人性和后天人格<strong>各只能有且仅有一个符合</strong>才能输出结果</li>
+                    <li><strong>探索其他:</strong> 若想测试其他性格组合,请点击"重置测评"按钮</li>
+                </ul>
             </div>
 
             <!-- 先天人性卡片区 -->
@@ -106,34 +110,13 @@
                     <div class="label">后天人格</div>
                     <div id="resultPersonalities" class="values"></div>
                 </div>
-                <div class="summary-item">
-                    <div class="label">性格组合</div>
-                    <div id="resultCount" class="count">共 X 种</div>
-                </div>
             </div>
 
             <!-- 结果展示区域 -->
-            <div class="result-display">
-                <!-- 侧边索引导航 -->
-                <div class="result-index">
-                    <div class="index-title">性格索引</div>
-                    <div id="resultIndexList" class="index-list">
-                        <!-- 索引项将通过JS动态生成 -->
-                    </div>
-                </div>
-
+            <div class="result-display-single">
                 <!-- 性格详情卡片 -->
-                <div class="result-content">
-                    <div id="currentResultCard" class="personality-card">
-                        <!-- 性格详情将通过JS动态生成 -->
-                    </div>
-
-                    <!-- 翻页控制 -->
-                    <div class="pagination">
-                        <button id="btnPrevResult" class="btn-page" onclick="previousResult()">← 上一个</button>
-                        <span id="paginationInfo" class="page-info">1 / X</span>
-                        <button id="btnNextResult" class="btn-page" onclick="nextResult()">下一个 →</button>
-                    </div>
+                <div id="currentResultCard" class="personality-card">
+                    <!-- 性格详情将通过JS动态生成 -->
                 </div>
             </div>
 

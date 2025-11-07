@@ -370,6 +370,11 @@ body {
   margin-bottom: 32px;
 }
 
+/* 单结果展示布局（无侧边栏和翻页） */
+.result-display-single {
+  margin-bottom: 32px;
+}
+
 /* 索引导航 */
 .result-index {
   background: var(--bg-card);
@@ -638,6 +643,19 @@ body {
 .dimension-card.qualified {
   border-color: var(--success);
   background: linear-gradient(135deg, #FFFFFF 0%, #E8F5E9 100%);
+}
+
+.dimension-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--border);
+  background: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%);
+}
+
+.dimension-card.locked:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border);
 }
 
 /* 卡片内容 */
