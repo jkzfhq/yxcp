@@ -19,7 +19,9 @@ const state = {
     qualifiedPersonalities: [], // 符合的后天人格
     combinations: []            // 组合结果
   },
-  currentResultIndex: 0
+  currentResultIndex: 0,
+  // 保存主页滚动位置
+  scrollPosition: 0
 };
 
 // ========== 持久化存储键名 ==========
@@ -148,6 +150,9 @@ function createCard(type, data) {
 
 // ========== 开始某个维度的测评 ==========
 function startDimensionTest(type, name) {
+  // 保存当前滚动位置
+  state.scrollPosition = window.scrollY || window.pageYOffset;
+
   state.currentTest.type = type;
   state.currentTest.name = name;
   state.currentTest.questionIndex = 0;
@@ -259,6 +264,14 @@ function backToHome() {
 
   // 切换到主页
   showPage('welcome');
+
+  // 恢复滚动位置（使用 requestAnimationFrame 确保页面渲染完成后再滚动）
+  requestAnimationFrame(() => {
+    window.scrollTo({
+      top: state.scrollPosition,
+      behavior: 'instant' // 立即跳转，不使用平滑滚动
+    });
+  });
 }
 
 // ========== 从结果页返回主页 ==========
@@ -267,6 +280,14 @@ function backToHomeFromResults() {
   renderCards();
   updateViewResultsButton();
   showPage('welcome');
+
+  // 滚动到页面顶端
+  requestAnimationFrame(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'instant'
+    });
+  });
 }
 
 // ========== 更新"查看结果"按钮状态 ==========
