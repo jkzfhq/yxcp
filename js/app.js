@@ -1,28 +1,92 @@
-// 易象心学测评系统 - 核心逻辑
+// 易象心学测评系统 - 核心逻辑（卡片选择版）
 
 // ========== 全局状态 ==========
 const state = {
-  currentPhase: 'nature', // 'nature' | 'personality'
-  currentGroupIndex: 0,
-  currentQuestionIndex: 0,
-  answers: {
-    nature: [], // 存储8组的答案,每组为一个数组
-    personality: []
+  // 每个维度的测试状态
+  tests: {
+    nature: {},      // { '紫薇': { completed: false, qualified: false, answers: [] }, ... }
+    personality: {}  // { '君主': { completed: false, qualified: false, answers: [] }, ... }
   },
+  // 当前测试的维度
+  currentTest: {
+    type: null,        // 'nature' | 'personality'
+    name: null,        // 具体名称（如'紫薇'）
+    questionIndex: 0   // 当前题目索引 (0-8)
+  },
+  // 结果数据
   results: {
-    qualifiedNatures: [], // 符合的先天人性
+    qualifiedNatures: [],      // 符合的先天人性
     qualifiedPersonalities: [], // 符合的后天人格
-    combinations: [] // 组合结果
+    combinations: []            // 组合结果
   },
   currentResultIndex: 0
 };
 
+// ========== 持久化存储键名 ==========
+const STORAGE_KEY = 'yixiangTestResults';
+
+// ========== 保存数据到 localStorage ==========
+function saveToLocalStorage() {
+  try {
+    const dataToSave = {
+      tests: state.tests,
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    console.log('✅ 数据已保存到浏览器本地');
+  } catch (error) {
+    console.error('❌ 保存数据失败:', error);
+  }
+}
+
+// ========== 从 localStorage 加载数据 ==========
+function loadFromLocalStorage() {
+  try {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      state.tests = parsed.tests;
+      console.log('✅ 已恢复之前的测评数据');
+      return true;
+    }
+    console.log('ℹ️ 没有找到保存的数据');
+    return false;
+  } catch (error) {
+    console.error('❌ 加载数据失败:', error);
+    return false;
+  }
+}
+
 // ========== 初始化 ==========
 function init() {
-  // 初始化answers数组
-  for (let i = 0; i < 8; i++) {
-    state.answers.nature.push([]);
-    state.answers.personality.push([]);
+  // 初始化先天人性测试状态
+  natureData.forEach(item => {
+    state.tests.nature[item.name] = {
+      completed: false,
+      qualified: false,
+      answers: []
+    };
+  });
+
+  // 初始化后天人格测试状态
+  personalityData.forEach(item => {
+    state.tests.personality[item.name] = {
+      completed: false,
+      qualified: false,
+      answers: []
+    };
+  });
+
+  // 尝试从 localStorage 加载数据
+  const hasData = loadFromLocalStorage();
+
+  // 渲染卡片
+  renderCards();
+  updateViewResultsButton();
+
+  // 如果加载了数据，显示提示
+  if (hasData) {
+    console.log('💾 已恢复上次的测评进度');
   }
 }
 
@@ -34,11 +98,62 @@ function showPage(pageName) {
   document.getElementById(pageName + 'Page').classList.add('active');
 }
 
-// ========== 开始测评 ==========
-function startTest() {
-  state.currentPhase = 'nature';
-  state.currentGroupIndex = 0;
-  state.currentQuestionIndex = 0;
+// ========== 渲染卡片 ==========
+function renderCards() {
+  // 渲染先天人性卡片
+  const natureGrid = document.getElementById('natureCardGrid');
+  natureGrid.innerHTML = '';
+  natureData.forEach(item => {
+    const card = createCard('nature', item);
+    natureGrid.appendChild(card);
+  });
+
+  // 渲染后天人格卡片
+  const personalityGrid = document.getElementById('personalityCardGrid');
+  personalityGrid.innerHTML = '';
+  personalityData.forEach(item => {
+    const card = createCard('personality', item);
+    personalityGrid.appendChild(card);
+  });
+}
+
+// ========== 创建卡片元素 ==========
+function createCard(type, data) {
+  const testState = state.tests[type][data.name];
+  const card = document.createElement('div');
+  card.className = 'dimension-card';
+
+  // 根据状态添加样式类
+  if (testState.qualified) {
+    card.classList.add('qualified');
+  } else if (testState.completed) {
+    card.classList.add('completed');
+  }
+
+  // 卡片内容
+  card.innerHTML = `
+    <div class="card-symbol">${data.symbol}</div>
+    <div class="card-name">${data.name}</div>
+    <div class="card-desc">${data.description}</div>
+    <div class="card-status ${testState.qualified ? 'qualified-mark' : (testState.completed ? 'completed-mark' : '')}">
+      ${testState.qualified ? '✓' : (testState.completed ? '已完成' : '')}
+    </div>
+  `;
+
+  // 点击事件
+  card.onclick = () => startDimensionTest(type, data.name);
+
+  return card;
+}
+
+// ========== 开始某个维度的测评 ==========
+function startDimensionTest(type, name) {
+  state.currentTest.type = type;
+  state.currentTest.name = name;
+  state.currentTest.questionIndex = 0;
+
+  // 清空或初始化答案数组
+  state.tests[type][name].answers = [];
 
   showPage('test');
   renderQuestion();
@@ -47,10 +162,10 @@ function startTest() {
 
 // ========== 渲染题目 ==========
 function renderQuestion() {
-  const isNature = state.currentPhase === 'nature';
-  const data = isNature ? natureData : personalityData;
-  const currentGroup = data[state.currentGroupIndex];
-  const currentQuestion = currentGroup.questions[state.currentQuestionIndex];
+  const { type, name, questionIndex } = state.currentTest;
+  const data = type === 'nature' ? natureData : personalityData;
+  const currentGroup = data.find(item => item.name === name);
+  const currentQuestion = currentGroup.questions[questionIndex];
 
   // 更新组信息
   document.getElementById('groupName').textContent = currentGroup.name;
@@ -58,31 +173,27 @@ function renderQuestion() {
   document.getElementById('groupDescription').textContent = currentGroup.description;
 
   // 更新题目
-  document.getElementById('questionNum').textContent = state.currentQuestionIndex + 1;
+  document.getElementById('questionNum').textContent = questionIndex + 1;
   document.getElementById('questionText').textContent = currentQuestion;
 
   // 更新上一题按钮状态
   const btnPrev = document.getElementById('btnPrev');
-  const isFirstQuestion = state.currentGroupIndex === 0 && state.currentQuestionIndex === 0;
-  btnPrev.disabled = isFirstQuestion;
+  btnPrev.disabled = questionIndex === 0;
 }
 
 // ========== 更新进度 ==========
 function updateProgress() {
-  const totalGroups = 16;
-  const currentGroup = state.currentGroupIndex + (state.currentPhase === 'personality' ? 8 : 0) + 1;
-  const progress = (currentGroup / totalGroups) * 100;
+  const { questionIndex } = state.currentTest;
+  const progress = ((questionIndex + 1) / 9) * 100;
 
-  document.getElementById('progressText').textContent = `第${currentGroup}组 / 共16组`;
-  document.getElementById('phaseText').textContent =
-    state.currentPhase === 'nature' ? '第一阶段:先天人性测试' : '第二阶段:后天人格测试';
+  document.getElementById('progressText').textContent = `第 ${questionIndex + 1} 题 / 共 9 题`;
   document.getElementById('progressFill').style.width = progress + '%';
 }
 
 // ========== 回答问题 ==========
 function answerQuestion(answer) {
-  const phaseAnswers = state.answers[state.currentPhase];
-  phaseAnswers[state.currentGroupIndex][state.currentQuestionIndex] = answer;
+  const { type, name, questionIndex } = state.currentTest;
+  state.tests[type][name].answers[questionIndex] = answer;
 
   // 自动进入下一题
   nextQuestion();
@@ -90,64 +201,90 @@ function answerQuestion(answer) {
 
 // ========== 下一题 ==========
 function nextQuestion() {
-  const isNature = state.currentPhase === 'nature';
-  const data = isNature ? natureData : personalityData;
-  const currentGroup = data[state.currentGroupIndex];
+  const { type, name, questionIndex } = state.currentTest;
 
-  // 检查是否还有题目
-  if (state.currentQuestionIndex < currentGroup.questions.length - 1) {
-    // 同一组的下一题
-    state.currentQuestionIndex++;
+  if (questionIndex < 8) {
+    // 同组的下一题
+    state.currentTest.questionIndex++;
     renderQuestion();
+    updateProgress();
   } else {
-    // 当前组完成,进入下一组或下一阶段
-    if (state.currentGroupIndex < data.length - 1) {
-      // 同一阶段的下一组
-      state.currentGroupIndex++;
-      state.currentQuestionIndex = 0;
-      renderQuestion();
-      updateProgress();
-    } else {
-      // 当前阶段完成
-      if (state.currentPhase === 'nature') {
-        // 进入第二阶段
-        state.currentPhase = 'personality';
-        state.currentGroupIndex = 0;
-        state.currentQuestionIndex = 0;
-        renderQuestion();
-        updateProgress();
-      } else {
-        // 全部完成,计算结果
-        calculateResults();
-        showResults();
-      }
-    }
+    // 当前维度完成
+    finishDimensionTest();
   }
 }
 
 // ========== 上一题 ==========
 function previousQuestion() {
-  if (state.currentQuestionIndex > 0) {
-    // 同一组的上一题
-    state.currentQuestionIndex--;
-    renderQuestion();
-  } else if (state.currentGroupIndex > 0) {
-    // 上一组的最后一题
-    state.currentGroupIndex--;
-    const isNature = state.currentPhase === 'nature';
-    const data = isNature ? natureData : personalityData;
-    const prevGroup = data[state.currentGroupIndex];
-    state.currentQuestionIndex = prevGroup.questions.length - 1;
-    renderQuestion();
-    updateProgress();
-  } else if (state.currentPhase === 'personality') {
-    // 回到第一阶段的最后一组最后一题
-    state.currentPhase = 'nature';
-    state.currentGroupIndex = natureData.length - 1;
-    state.currentQuestionIndex = natureData[state.currentGroupIndex].questions.length - 1;
+  const { questionIndex } = state.currentTest;
+
+  if (questionIndex > 0) {
+    state.currentTest.questionIndex--;
     renderQuestion();
     updateProgress();
   }
+}
+
+// ========== 完成当前维度测评 ==========
+function finishDimensionTest() {
+  const { type, name } = state.currentTest;
+  const testState = state.tests[type][name];
+
+  // 标记为已完成
+  testState.completed = true;
+
+  // 计算是否符合条件（≥7个"是"）
+  const yesCount = testState.answers.filter(answer => answer === true).length;
+  testState.qualified = yesCount >= 7;
+
+  // 保存到 localStorage
+  saveToLocalStorage();
+
+  // 返回主页
+  backToHome();
+}
+
+// ========== 返回主页 ==========
+function backToHome() {
+  // 重置当前测试状态
+  state.currentTest = {
+    type: null,
+    name: null,
+    questionIndex: 0
+  };
+
+  // 重新渲染卡片以显示更新后的状态
+  renderCards();
+  updateViewResultsButton();
+
+  // 切换到主页
+  showPage('welcome');
+}
+
+// ========== 从结果页返回主页 ==========
+function backToHomeFromResults() {
+  // 保留所有测评记录，只切换页面
+  renderCards();
+  updateViewResultsButton();
+  showPage('welcome');
+}
+
+// ========== 更新"查看结果"按钮状态 ==========
+function updateViewResultsButton() {
+  const btn = document.getElementById('btnViewResults');
+
+  // 检查是否有符合条件的维度
+  const hasQualified =
+    Object.values(state.tests.nature).some(test => test.qualified) &&
+    Object.values(state.tests.personality).some(test => test.qualified);
+
+  btn.disabled = !hasQualified;
+}
+
+// ========== 查看结果 ==========
+function viewResults() {
+  calculateResults();
+  showResults();
 }
 
 // ========== 计算结果 ==========
@@ -156,19 +293,17 @@ function calculateResults() {
   state.results.qualifiedPersonalities = [];
   state.results.combinations = [];
 
-  // 计算符合的先天人性(≥7个"是")
-  state.answers.nature.forEach((groupAnswers, index) => {
-    const yesCount = groupAnswers.filter(answer => answer === true).length;
-    if (yesCount >= 7) {
-      state.results.qualifiedNatures.push(natureData[index].name);
+  // 收集符合的先天人性
+  Object.entries(state.tests.nature).forEach(([name, testState]) => {
+    if (testState.qualified) {
+      state.results.qualifiedNatures.push(name);
     }
   });
 
-  // 计算符合的后天人格(≥7个"是")
-  state.answers.personality.forEach((groupAnswers, index) => {
-    const yesCount = groupAnswers.filter(answer => answer === true).length;
-    if (yesCount >= 7) {
-      state.results.qualifiedPersonalities.push(personalityData[index].name);
+  // 收集符合的后天人格
+  Object.entries(state.tests.personality).forEach(([name, testState]) => {
+    if (testState.qualified) {
+      state.results.qualifiedPersonalities.push(name);
     }
   });
 
@@ -203,7 +338,7 @@ function calculateResults() {
   }
 }
 
-// ========== 展示结果 ==========
+// ========== ���示结果 ==========
 function showResults() {
   showPage('result');
 
@@ -221,6 +356,9 @@ function showResults() {
   // 显示第一个结果
   state.currentResultIndex = 0;
   renderCurrentResult();
+
+  // 滚动到页面顶部
+  window.scrollTo(0, 0);
 }
 
 // ========== 渲染结果索引 ==========
@@ -299,7 +437,7 @@ function renderCurrentResult() {
       </div>
     `;
   } else {
-    // 数据暂未补��,显示基本信息
+    // 数据暂未补充,显示基本信息
     resultCard.innerHTML = `
       <div class="card-header">
         <h2 class="card-title">${combo.fullName}</h2>
@@ -334,6 +472,8 @@ function previousResult() {
   if (state.currentResultIndex > 0) {
     state.currentResultIndex--;
     renderCurrentResult();
+    // 滚动到结果展示区域
+    document.querySelector('.result-display').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
@@ -341,29 +481,53 @@ function nextResult() {
   if (state.currentResultIndex < state.results.combinations.length - 1) {
     state.currentResultIndex++;
     renderCurrentResult();
+    // 滚动到结果展示区域
+    document.querySelector('.result-display').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
 function jumpToResult(index) {
   state.currentResultIndex = index;
   renderCurrentResult();
+  // 滚动到结果展示区域
+  document.querySelector('.result-display').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ========== 重新测评 ==========
 function restartTest() {
-  // 重置状态
-  state.currentPhase = 'nature';
-  state.currentGroupIndex = 0;
-  state.currentQuestionIndex = 0;
-  state.currentResultIndex = 0;
+  // 二次确认
+  const confirmed = confirm('确认要重置所有评测数据吗?');
 
-  // 清空答案
-  state.answers.nature = [];
-  state.answers.personality = [];
-  for (let i = 0; i < 8; i++) {
-    state.answers.nature.push([]);
-    state.answers.personality.push([]);
+  if (!confirmed) {
+    return; // 用户取消
   }
+
+  // 清除 localStorage
+  localStorage.removeItem(STORAGE_KEY);
+
+  // 重置所有测试状态
+  Object.keys(state.tests.nature).forEach(name => {
+    state.tests.nature[name] = {
+      completed: false,
+      qualified: false,
+      answers: []
+    };
+  });
+
+  Object.keys(state.tests.personality).forEach(name => {
+    state.tests.personality[name] = {
+      completed: false,
+      qualified: false,
+      answers: []
+    };
+  });
+
+  // 重置当前测试状态
+  state.currentTest = {
+    type: null,
+    name: null,
+    questionIndex: 0
+  };
 
   // 清空结果
   state.results = {
@@ -371,9 +535,65 @@ function restartTest() {
     qualifiedPersonalities: [],
     combinations: []
   };
+  state.currentResultIndex = 0;
 
-  // 返回欢迎页
+  // 返回主页
+  renderCards();
+  updateViewResultsButton();
   showPage('welcome');
+}
+
+// ========== 清除所有测评数据（主页按钮） ==========
+function clearAllTestData() {
+  // 二次确认
+  const confirmed = confirm('确认要重置所有评测数据吗?');
+
+  if (!confirmed) {
+    return; // 用户取消
+  }
+
+  // 清除 localStorage
+  localStorage.removeItem(STORAGE_KEY);
+  console.log('🗑️ 已清除 localStorage 数据');
+
+  // 重置所有测试状态
+  Object.keys(state.tests.nature).forEach(name => {
+    state.tests.nature[name] = {
+      completed: false,
+      qualified: false,
+      answers: []
+    };
+  });
+
+  Object.keys(state.tests.personality).forEach(name => {
+    state.tests.personality[name] = {
+      completed: false,
+      qualified: false,
+      answers: []
+    };
+  });
+
+  // 重置当前测试状态
+  state.currentTest = {
+    type: null,
+    name: null,
+    questionIndex: 0
+  };
+
+  // 清空结果
+  state.results = {
+    qualifiedNatures: [],
+    qualifiedPersonalities: [],
+    combinations: []
+  };
+  state.currentResultIndex = 0;
+
+  // 刷新UI（停留在主页）
+  renderCards();
+  updateViewResultsButton();
+
+  // 提示用户
+  alert('✅ 所有评测数据已清除');
 }
 
 // ========== 页面加载完成后初始化 ==========

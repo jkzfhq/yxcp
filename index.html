@@ -7,39 +7,58 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- 欢迎页 -->
+    <!-- 欢迎页/卡片选择页 -->
     <div id="welcomePage" class="page active">
-        <div class="container">
+        <div class="container selection-container">
             <h1 class="main-title">易象心学测评</h1>
-            <div class="subtitle">探索内心,洞见真我</div>
+            <div class="subtitle">探索内心,洞见真我 · 自由选择测评维度</div>
 
             <div class="intro-card">
                 <h2>测评说明</h2>
-                <p>易象心学将人的性格归类为64种,每一种性格都由<strong>先天人性</strong>和<strong>后天人格</strong>组成:</p>
-                <ul>
-                    <li><strong>先天人性</strong>:代表与生俱来的八种宇宙内象天性</li>
-                    <li><strong>后天人格</strong>:代表在社会中养成的八种行为模式</li>
-                </ul>
-                <p>本测评分为两个阶段,共16组题目(每组9题):</p>
-                <ul>
-                    <li><strong>第一阶段</strong>:先天人性测试(8组)</li>
-                    <li><strong>第二阶段</strong>:后天人格测试(8组)</li>
-                </ul>
-                <p class="tip">⏱️ 预计完成时间:15-20分钟</p>
+                <p>请点击下方卡片自由选择您想要测评的维度,每个维度包含9道题目。</p>
+                <p class="tip">💡 提示:您可以自由选择测评,完成所需维度后点击"查看结果"按钮</p>
             </div>
 
-            <button class="btn-primary" onclick="startTest()">开始测评</button>
+            <!-- 先天人性卡片区 -->
+            <div class="card-section">
+                <h2 class="section-title">先天人性 · 与生俱来的八种天性</h2>
+                <div class="card-grid" id="natureCardGrid">
+                    <!-- 卡片将通过JS动态生成 -->
+                </div>
+            </div>
+
+            <!-- 后天人格卡片区 -->
+            <div class="card-section">
+                <h2 class="section-title">后天人格 · 社会中养成的八种模式</h2>
+                <div class="card-grid" id="personalityCardGrid">
+                    <!-- 卡片将通过JS动态生成 -->
+                </div>
+            </div>
+
+            <!-- 查看结果和重置按钮 -->
+            <div class="result-button-container">
+                <button class="btn-primary btn-view-results" onclick="viewResults()" id="btnViewResults">
+                    查看结果
+                </button>
+                <button class="btn-secondary btn-reset-data" onclick="clearAllTestData()">
+                    重置测评
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- 测评页面 -->
     <div id="testPage" class="page">
         <div class="container">
+            <!-- 返回按钮 -->
+            <div class="back-to-home">
+                <button class="btn-back" onclick="backToHome()">← 返回主页</button>
+            </div>
+
             <!-- 进度条 -->
             <div class="progress-bar">
                 <div class="progress-info">
-                    <span id="progressText">第1组 / 共16组</span>
-                    <span id="phaseText">第一阶段:先天人性测试</span>
+                    <span id="progressText">第 1 题 / 共 9 题</span>
                 </div>
                 <div class="progress-track">
                     <div id="progressFill" class="progress-fill"></div>
@@ -118,8 +137,9 @@
                 </div>
             </div>
 
-            <!-- 重新测评按钮 -->
+            <!-- 操作按钮 -->
             <div class="result-actions">
+                <button class="btn-secondary" onclick="backToHomeFromResults()">← 返回主页</button>
                 <button class="btn-secondary" onclick="restartTest()">重新测评</button>
             </div>
         </div>
