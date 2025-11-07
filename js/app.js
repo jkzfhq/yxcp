@@ -705,9 +705,6 @@ function clearAllTestData() {
   // 刷新UI（停留在主页）
   renderCards();
   updateViewResultsButton();
-
-  // 提示用户
-  alert('✅ 所有评测数据已清除');
 }
 
 // ========== 页面加载完成后初始化 ==========
